@@ -128,14 +128,11 @@ namespace _02_zoo
             void AddAnimal(Animal animal);
         }
 
-        abstract class Watchers : IWatch
+        abstract class Watcher : IWatch
         {
             public List<Animal> listAnimal = new List<Animal>();
 
-            
-
             public string Name { get; set; }
-
 
             virtual public void Watch()
             {
@@ -143,6 +140,9 @@ namespace _02_zoo
                 Console.WriteLine("\n{0} watch by:", Name);
                 foreach (var a in listAnimal)
                 {
+                    // рандомно виводимо дії тварин
+                    // можна зробити на зчитування поточного часу (чи введення годин користувачем) і присвоювати дії згідно годин,
+                    // наприклад о 17 всі їдять, о 18 гуляють, а о 19 вже сплять абощо
                     Thread.Sleep(100);
                     Console.Write("\t");
                     switch (rand.Next(1, 4))
@@ -166,17 +166,15 @@ namespace _02_zoo
             }
         }
 
-        class VideoCam : Watchers
+        class VideoCam : Watcher
         {
             public VideoCam(string name = "unknown webcam")
             {
                 Name = name;
             }
-
-
         }
 
-        class EmployeeZoo : Watchers
+        class EmployeeZoo : Watcher
         {
             public EmployeeZoo(string name = "unknown employee")
             {
@@ -185,7 +183,7 @@ namespace _02_zoo
 
             public void FeedAnimal(Animal animal)
             {
-                Console.WriteLine($"{Name} feed {animal.GetType()} {animal.Name} by {animal.KindEat}");
+                Console.WriteLine($"\n{Name} feed {animal.GetType().Name} {animal.Name} by {animal.KindEat}");
                 animal.Eat();
             }
 
@@ -201,29 +199,48 @@ namespace _02_zoo
                 new Parrot("Gesha"),
                 new Fox("Foxy", "Chiсken", 1.5),
                 new Lion("Simba", "Meat", 7),
+                new Lion("Mufasa", "Meat", 8),
+                new Lion("Sarabi", "Meat", 6.5),
+                new Wolf("Wolfy", "Meat", 4.5),
             };
 
-            List<IWatch> watchers = new List<IWatch>
+            List<Watcher> watchers = new List<Watcher>
             {
                 new VideoCam("VideoCam 1"),
+                new EmployeeZoo("Employee Will Smith"),
                 new VideoCam("VideoCam 2"),
-                new EmployeeZoo("employee Will Smith")
+                new VideoCam("VideoCam 3"),
             };
 
             void Generate()
             {
-                for(int i = 0; i < watchers.Count(); i++)
-                    for (int j = 0; j < (animals.Count() / watchers.Count()); j++)
-                        watchers[i].AddAnimal(animals[j + i * animals.Count() / watchers.Count()]);
+                // привязуємо усіх звірів до наглядачів
+                int cnt = 0;
+                while (cnt <= animals.Count - 1)
+                {
+                    for (int i = 0; i < watchers.Count(); i++)
+                    {
+                        watchers[i].AddAnimal(animals[cnt++]);
+                        if (cnt >= animals.Count)
+                            break;
+                    }
+                }
+
+                // виводимо хто з наглядачів за ким із звірів дивиться, і що звірі роблять в даний момент
                 foreach(var w in watchers)
                     w.Watch();
 
+                // шукаємо першого наглядача працівника
                 var worker = from s in watchers
                                where s is EmployeeZoo
                                select s;
-                //((EmployeeZoo)watchers[2]).FeedAnimal(animals[5]);
-                //Console.WriteLine(worker.FirstOrDefault());
-                //((EmployeeZoo)worker.FirstOrDefault()).FeedAnimal(animals[5]);
+                
+                // якщо такий є, то вказуємо йому нагодувати рандомну тваринку
+                if (worker.FirstOrDefault() != null)
+                {
+                    Random rand = new Random();
+                    ((EmployeeZoo)worker.FirstOrDefault()).FeedAnimal(animals[rand.Next(0, animals.Count())]);
+                }
             }
 
             public void Show()
@@ -234,7 +251,6 @@ namespace _02_zoo
 
         static void Main(string[] args)
         {
-           
             Zoo z = new Zoo();
             z.Show();
                
